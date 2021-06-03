@@ -1,0 +1,7 @@
+!.gitignore
+*.a
+*.o
+*.obj
+*.exe
+*.wav 
+
