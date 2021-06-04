@@ -95,7 +95,7 @@ static void wavein_callback_proc(void *ctxt, void *buf, int len)
 
                 // recv data
                 if (sl->state == STATE_RECV) {
-                    if (freqidx) printf("max amp freq idx: %d\n", freqidx); fflush(stdout);
+                    if (freqidx) { printf("max amp freq idx: %d\n", freqidx); fflush(stdout); }
                     if (++sl->nibble_recvnum < 4) {
                         int nibble = freqidx - SOUNDLINK_MIN_FREQ_IDX;
                         nibble = nibble < 15 ? nibble : 15;
