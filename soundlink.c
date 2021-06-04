@@ -19,8 +19,7 @@ start byte + length byte + data bytes + 2 bytes checksum
 #define SOUNDLINK_IDX_TO_FREQ(idx ) ( 8000 * (idx) / SOUNDLINK_FFT_LEN)
 #define SOUNDLINK_MIN_FREQ_IDX       SOUNDLINK_FREQ_TO_IDX(500)
 #define SOUNDLINK_MAX_FREQ_IDX      (SOUNDLINK_MIN_FREQ_IDX + 15)
-#define SOUNDLINK_START_FREQ_1      (SOUNDLINK_MIN_FREQ_IDX + 16)
-#define SOUNDLINK_START_FREQ_2      (SOUNDLINK_MIN_FREQ_IDX + 17)
+#define SOUNDLINK_START_CODE_IDX    (SOUNDLINK_MIN_FREQ_IDX + 17)
 #define LOW_NIBBLE_TO_FREQ(byte)     SOUNDLINK_IDX_TO_FREQ(SOUNDLINK_MIN_FREQ_IDX + (((byte) >> 0) & 0xF))
 #define HIGH_NIBBLE_TO_FREQ(byte)    SOUNDLINK_IDX_TO_FREQ(SOUNDLINK_MIN_FREQ_IDX + (((byte) >> 4) & 0xF))
 
@@ -77,34 +76,26 @@ static void wavein_callback_proc(void *ctxt, void *buf, int len)
                     }
                 }
                 sl->pcmnum = 0;
-//              if (freqidx) printf("max amp freq idx: %d %f\n", freqidx, freqidx * 8000 / 128.0); fflush(stdout);
 
                 // check start code
                 switch (sl->check) {
                 case 0: case 1: case 2:
-                    if (freqidx == SOUNDLINK_START_FREQ_1) sl->check++;
+                    if (freqidx == SOUNDLINK_START_CODE_IDX) sl->check += 1;
                     else sl->check = 0;
                     break;
                 case 3:
-                    if      (freqidx == SOUNDLINK_START_FREQ_1) sl->check += 1;
-                    else if (freqidx == SOUNDLINK_START_FREQ_2) sl->check += 2;
-                    else sl->check = 0;
-                    break;
-                case 4: case 5: case 6:
-                    if (freqidx == SOUNDLINK_START_FREQ_2) sl->check++;
-                    else sl->check = 0;
-                    break;
-                case 7: sl->check++; break;
-                case 8:
-                    sl->state   = STATE_RECV;
-                    sl->check   = 0;
-                    sl->recvnum = 0;
-                    sl->nibble_recvnum = 0;
+                    if (freqidx != SOUNDLINK_START_CODE_IDX) {
+                        sl->state   = STATE_RECV;
+                        sl->check   = 0;
+                        sl->recvnum = 0;
+                        sl->nibble_recvnum = 0;
+                    }
                     break;
                 }
 
                 // recv data
                 if (sl->state == STATE_RECV) {
+                    if (freqidx) printf("max amp freq idx: %d\n", freqidx); fflush(stdout);
                     if (++sl->nibble_recvnum < 4) {
                         int nibble = freqidx - SOUNDLINK_MIN_FREQ_IDX;
                         nibble = nibble < 15 ? nibble : 15;
@@ -179,8 +170,8 @@ int soundlink_send(void *ctxt, char *buf, int len, char *dst)
 
     // generate start code
     wavfile_getval(sl->wavfile, "buffer_pointer", &pcmbuf);
-    gen_sin_wav(pcmbuf, 200, 8000, SOUNDLINK_IDX_TO_FREQ(SOUNDLINK_START_FREQ_1)); pcmbuf += 200;
-    gen_sin_wav(pcmbuf, 200, 8000, SOUNDLINK_IDX_TO_FREQ(SOUNDLINK_START_FREQ_2)); pcmbuf += 200;
+    gen_sin_wav(pcmbuf, 200, 8000, SOUNDLINK_IDX_TO_FREQ(SOUNDLINK_START_CODE_IDX)); pcmbuf += 200;
+    gen_sin_wav(pcmbuf, 200, 8000, SOUNDLINK_IDX_TO_FREQ(SOUNDLINK_START_CODE_IDX)); pcmbuf += 200;
 
     // generate length
     gen_sin_wav(pcmbuf, 200, 8000, LOW_NIBBLE_TO_FREQ( n)); pcmbuf += 200;
@@ -238,7 +229,7 @@ int soundlink_recv(void *ctxt, char *src, PFN_SOUNDLINK_CALLBACK callback, void 
 #ifdef _TEST_SOUNDLINK_
 static void soundlink_callback_proc(void *cbctxt, char *buf, int len)
 {
-    printf("recv cbctxt: %p, data: %s, len: %d\n", cbctxt, buf, len);
+    printf("recv data: %s, len: %d\n", buf, len);
     fflush(stdout);
 }
 
