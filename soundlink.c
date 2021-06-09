@@ -78,19 +78,16 @@ static void wavein_callback_proc(void *ctxt, void *buf, int len)
                 sl->pcmnum = 0;
 
                 // check start code
-                switch (sl->check) {
-                case 0: case 1: case 2:
+                if (sl->check <= 2) {
                     if (freqidx == SOUNDLINK_START_CODE_IDX) sl->check += 1;
                     else sl->check = 0;
-                    break;
-                case 3:
+                } else if (sl->check == 3) {
                     if (freqidx != SOUNDLINK_START_CODE_IDX) {
                         sl->state   = STATE_RECV;
                         sl->check   = 0;
                         sl->recvnum = 0;
                         sl->nibble_recvnum = 0;
                     }
-                    break;
                 }
 
                 // recv data
@@ -98,9 +95,7 @@ static void wavein_callback_proc(void *ctxt, void *buf, int len)
                     if (freqidx) { printf("max amp freq idx: %d\n", freqidx); fflush(stdout); }
                     if (++sl->nibble_recvnum < 4) {
                         int nibble = freqidx - SOUNDLINK_MIN_FREQ_IDX;
-                        nibble = nibble < 15 ? nibble : 15;
-                        nibble = nibble > 0  ? nibble : 0 ;
-                        sl->nibble_counter[nibble]++;
+                        if (nibble >= 0 && nibble <= 15) sl->nibble_counter[nibble]++;
                     } else {
                         int max = 0, nibble = 0;
                         for (i=0; i<16; i++) {
