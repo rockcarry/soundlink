@@ -69,7 +69,7 @@ static void wavein_callback_proc(void *ctxt, void *buf, int len)
                 for (i = 0; i < 50; i++) fft_buf[i * 2] = sl->pcmbuf[i];
                 fft_execute(sl->fft, fft_buf, fft_buf);
                 for (i = 0; i < SOUNDLINK_FFT_LEN / 2; i++) {
-                    float curamp = sqrt(fft_buf[i * 2 + 0] * fft_buf[i * 2 + 0] + fft_buf[i * 2 + 1] * fft_buf[i * 2 + 1]);
+                    float curamp = fft_buf[i * 2 + 0] * fft_buf[i * 2 + 0] + fft_buf[i * 2 + 1] * fft_buf[i * 2 + 1];
                     if (maxamp < curamp) {
                         maxamp = curamp;
                         freqidx= i;
