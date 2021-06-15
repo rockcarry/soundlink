@@ -55,14 +55,13 @@ static void wavein_callback_proc(void *ctxt, void *buf, int len)
     if (sl) {
         int16_t *srcbuf = (int16_t*)buf;
         int      srcnum =  len / sizeof(int16_t);
-        while (sl->pcmnum + srcnum >= 50) {
-            if (sl->pcmnum < 50) {
-                int ncopy = srcnum < (50 - sl->pcmnum) ? srcnum : (50 - sl->pcmnum);
-                memcpy(sl->pcmbuf + sl->pcmnum, srcbuf, ncopy * sizeof(int16_t));
-                srcbuf     += ncopy;
-                srcnum     -= ncopy;
-                sl->pcmnum += ncopy;
-            }
+        while (srcnum > 0) {
+            int ncopy = srcnum < (50 - sl->pcmnum) ? srcnum : (50 - sl->pcmnum);
+            memcpy(sl->pcmbuf + sl->pcmnum, srcbuf, ncopy * sizeof(int16_t));
+            srcbuf     += ncopy;
+            srcnum     -= ncopy;
+            sl->pcmnum += ncopy;
+
             if (sl->pcmnum == 50) {
                 float    fft_buf[SOUNDLINK_FFT_LEN * 2] = {0}, maxamp = 0;
                 int      freqidx = 0, i;
