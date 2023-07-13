@@ -175,7 +175,7 @@ int soundlink_send(void *ctxt, char *buf, int len, char *dst)
     for (checksum = n, i = 0; i < n; i++) {
         gen_sin_wav(pcmbuf, 200, 8000, LOW_NIBBLE_TO_FREQ( buf[i])); pcmbuf += 200;
         gen_sin_wav(pcmbuf, 200, 8000, HIGH_NIBBLE_TO_FREQ(buf[i])); pcmbuf += 200;
-        checksum += buf[i];
+        checksum += (uint8_t)buf[i];
     }
 
     // generate checksum
